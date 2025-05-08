@@ -1,5 +1,5 @@
-from src.EA.CMAES import CMAES, CMAES_opts
-from src.EA.NSGA import NSGAII, NSGA_opts
+from src.EA.CMAES_sol import CMAES_sol, CMAES_opts
+from src.EA.NSGA_sol import NSGAII_sol, NSGA_opts
 from src.world.World import World
 from src.world.robot.controllers import MLP
 from src.world.robot.morphology.AntCustomRobot import AntRobot
