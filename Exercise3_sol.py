@@ -146,17 +146,64 @@ class AntWorld(World):
 
         observations, info = envs.reset()
         done_mask = np.zeros(self.n_repeats, dtype=bool)
+        
+        # print("info:", info)
+        # print("type(info):", type(info))
+
+        # initial_positions = np.array([[info_["x_position"], info_["y_position"]] for info_ in info])
+        initial_positions = np.stack((info["x_position"], info["y_position"]), axis=-1)
+        previous_positions = initial_positions.copy()
+
+        print("initial_positions:", initial_positions)
+        # print("shape:", np.shape(initial_positions))
+
+        previous_angles = np.arctan2(initial_positions[:, 1], initial_positions[:, 0])
+
         for step in range(self.n_steps):
             actions = np.where(done_mask[:, None], 0, self.controller.get_action(observations.T).T)
-            observations, rewards, dones, truncated, infos = envs.step(actions)
+            observations, _, dones, truncated, infos = envs.step(actions)
 
-            # Store rewards for active environments only
-            rewards_full[step, done_mask == False] = rewards[done_mask == False]
+            # Positions actuelles
 
-            multi_obj_reward = np.array([infos['reward_forward'], -infos['ctrl_cost']]).T  # TODO
-            multi_obj_rewards_full[step, done_mask == False] = multi_obj_reward[done_mask == False]
+            # print(f"type(infos) = {type(infos)}")
+            # print(f"Sample infos content: {list(infos)[:3]}")
 
-            # Update the done mask based on the "done" and "truncated" flags
+            x_pos = infos["x_position"]
+            y_pos = infos["y_position"]
+
+            current_positions = np.stack([x_pos, y_pos], axis=1)
+
+            # Angle wrt the center
+            current_angles = np.arctan2(y_pos, x_pos)
+            delta_angles = current_angles - previous_angles
+
+            # Correction for -pi/+pi transition
+            delta_angles = (delta_angles + np.pi) % (2 * np.pi) - np.pi
+
+            # Indirect rotations
+            angular_reward = np.where(delta_angles > 0, delta_angles, 0)
+
+            # Tangential velocity
+            displacement = np.linalg.norm(current_positions - previous_positions, axis=1)
+            tangential_reward = displacement
+
+            # Penalization for frontier proximity (rayon max ~1.2 par exemple)
+            radius = np.linalg.norm(current_positions, axis=1)
+            penalty_offtrack = np.where(radius > 1.2, -5.0, 0.0)
+
+            # Conbined total reward
+            combined_reward = 5.0 * angular_reward + 100000.0 * tangential_reward + penalty_offtrack
+            # combined_reward = 100*(current_positions[0] - previous_positions[0])
+
+            rewards_full[step, ~done_mask] = combined_reward[~done_mask]
+
+            # For visualisation
+            multi_obj_reward = np.array([angular_reward, tangential_reward]).T
+            multi_obj_rewards_full[step, ~done_mask] = multi_obj_reward[~done_mask]
+
+            # Update
+            previous_positions = current_positions
+            previous_angles = current_angles
             done_mask = done_mask | dones | truncated
 
             # Optionally, break if all environments have terminated
@@ -254,7 +301,7 @@ def main():
     population_size = 250
     CMAES_opts["min"] = -1
     CMAES_opts["max"] = 1
-    CMAES_opts["num_parents"] = 100
+    CMAES_opts["num_parents"] = 15
     CMAES_opts["num_generations"] = 100
     CMAES_opts["mutation_sigma"] = 0.33
 
@@ -263,23 +310,23 @@ def main():
 
     run_EA_single(ea_single, world)
 
-    # %% Optimise multi-objective
-    # TODO implement the NSGAII
-    world = AntWorld()
-    n_parameters = world.n_params
+    # # %% Optimise multi-objective
+    # # TODO implement the NSGAII
+    # world = AntWorld()
+    # n_parameters = world.n_params
 
-    population_size = 250
-    NSGA_opts["min"] = -1
-    NSGA_opts["max"] = 1
-    NSGA_opts["num_parents"] = population_size
-    NSGA_opts["num_generations"] = 100
-    NSGA_opts["mutation_prob"] = 0.3
-    NSGA_opts["crossover_prob"] = 0.5
+    # population_size = 250
+    # NSGA_opts["min"] = -1
+    # NSGA_opts["max"] = 1
+    # NSGA_opts["num_parents"] = population_size
+    # NSGA_opts["num_generations"] = 100
+    # NSGA_opts["mutation_prob"] = 0.3
+    # NSGA_opts["crossover_prob"] = 0.5
 
-    results_dir = os.path.join(ROOT_DIR, 'results', ENV_NAME, 'multi')
-    ea_multi_obj = NSGAII_sol(population_size, n_parameters, NSGA_opts, results_dir)
+    # results_dir = os.path.join(ROOT_DIR, 'results', ENV_NAME, 'multi')
+    # ea_multi_obj = NSGAII_sol(population_size, n_parameters, NSGA_opts, results_dir)
 
-    run_EA_multi(ea_multi_obj, world)
+    # run_EA_multi(ea_multi_obj, world)
 
     # %% visualise
     # TODO: Make a video of the best individual, and plot the fitness curve.
