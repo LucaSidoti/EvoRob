@@ -20,6 +20,7 @@ import os
 
 ROOT_DIR = get_project_root()
 ENV_NAME = 'Ant_custom'
+STRATEGY = 'NSGAII'  # 'CMAES' for multi-objective evolution
 
 
 class AntWorld(World):
@@ -32,7 +33,7 @@ class AntWorld(World):
         self.controller = MLP.NNController(state_space, action_space)
         self.n_weights = self.controller.n_params
 
-        self.n_params = self.n_weights + 8
+        self.n_params = self.n_weights # + 8
         self.world_file = os.path.join(ROOT_DIR, "AntEnv.xml")
 
         self.joint_limits = [[-30, 30], [30, 70],
@@ -46,70 +47,97 @@ class AntWorld(World):
                            ]
 
     def geno2pheno(self, genotype):
-        control_weights = genotype[-self.n_weights:]
-        body_params = (genotype[:-self.n_weights] + 1.5) / 5 * 0.5 + 0.1
-        assert len(body_params) == 8
-        assert len(control_weights) == self.n_weights
-        assert not np.any(body_params <= 0)
+        control_weights = genotype # [-self.n_weights:]
+        # body_params = (genotype[:-self.n_weights] + 1.5) / 5 * 0.5 + 0.1
+        # assert len(body_params) == 8
+        # assert len(control_weights) == self.n_weights
+        # assert not np.any(body_params <= 0)
 
         self.controller.geno2pheno(control_weights)
 
-        front_left_leg, front_left_ankle, front_right_leg, front_right_ankle, back_left_leg, back_left_ankle, back_right_leg, back_right_ankle, = body_params
+        # front_left_leg, front_left_ankle, front_right_leg, front_right_ankle, back_left_leg, back_left_ankle, back_right_leg, back_right_ankle, = body_params
 
-        # Define the 3D coordinates of the relative tree structure
-        front_left_hip_xyz = np.array([0.2, 0.2, 0])
-        front_left_knee_xyz = np.array(
-            [np.sqrt(0.5 * front_left_leg ** 2), np.sqrt(0.5 * front_left_leg ** 2), 0]) + front_left_hip_xyz
-        front_left_toe_xyz = np.array(
-            [np.sqrt(0.5 * front_left_ankle ** 2), np.sqrt(0.5 * front_left_ankle ** 2), 0]) + front_left_knee_xyz
+        # # Define the 3D coordinates of the relative tree structure
+        # front_left_hip_xyz = np.array([0.2, 0.2, 0])
+        # front_left_knee_xyz = np.array(
+        #     [np.sqrt(0.5 * front_left_leg ** 2), np.sqrt(0.5 * front_left_leg ** 2), 0]) + front_left_hip_xyz
+        # front_left_toe_xyz = np.array(
+        #     [np.sqrt(0.5 * front_left_ankle ** 2), np.sqrt(0.5 * front_left_ankle ** 2), 0]) + front_left_knee_xyz
 
-        front_right_hip_xyz = np.array([-0.2, 0.2, 0])
-        front_right_knee_xyz = np.array(
-            [-np.sqrt(0.5 * front_right_leg ** 2), np.sqrt(0.5 * front_right_leg ** 2), 0]) + front_right_hip_xyz
-        front_right_toe_xyz = np.array(
-            [-np.sqrt(0.5 * front_right_ankle ** 2), np.sqrt(0.5 * front_right_ankle ** 2), 0]) + front_right_knee_xyz
+        # front_right_hip_xyz = np.array([-0.2, 0.2, 0])
+        # front_right_knee_xyz = np.array(
+        #     [-np.sqrt(0.5 * front_right_leg ** 2), np.sqrt(0.5 * front_right_leg ** 2), 0]) + front_right_hip_xyz
+        # front_right_toe_xyz = np.array(
+        #     [-np.sqrt(0.5 * front_right_ankle ** 2), np.sqrt(0.5 * front_right_ankle ** 2), 0]) + front_right_knee_xyz
 
-        back_left_hip_xyz = np.array([-0.2, -0.2, 0])
-        back_left_knee_xyz = np.array(
-            [-np.sqrt(0.5 * back_left_leg ** 2), -np.sqrt(0.5 * back_left_leg ** 2), 0]) + back_left_hip_xyz
-        back_left_toe_xyz = np.array(
-            [-np.sqrt(0.5 * back_left_ankle ** 2), -np.sqrt(0.5 * back_left_ankle ** 2), 0]) + back_left_knee_xyz
+        # back_left_hip_xyz = np.array([-0.2, -0.2, 0])
+        # back_left_knee_xyz = np.array(
+        #     [-np.sqrt(0.5 * back_left_leg ** 2), -np.sqrt(0.5 * back_left_leg ** 2), 0]) + back_left_hip_xyz
+        # back_left_toe_xyz = np.array(
+        #     [-np.sqrt(0.5 * back_left_ankle ** 2), -np.sqrt(0.5 * back_left_ankle ** 2), 0]) + back_left_knee_xyz
 
-        back_right_hip_xyz = np.array([0.2, -0.2, 0])
-        back_right_knee_xyz = np.array(
-            [np.sqrt(0.5 * back_right_leg ** 2), -np.sqrt(0.5 * back_right_leg ** 2), 0]) + back_right_hip_xyz
-        back_right_toe_xyz = np.array(
-            [np.sqrt(0.5 * back_right_ankle ** 2), -np.sqrt(0.5 * back_right_ankle ** 2), 0]) + back_right_knee_xyz
+        # back_right_hip_xyz = np.array([0.2, -0.2, 0])
+        # back_right_knee_xyz = np.array(
+        #     [np.sqrt(0.5 * back_right_leg ** 2), -np.sqrt(0.5 * back_right_leg ** 2), 0]) + back_right_hip_xyz
+        # back_right_toe_xyz = np.array(
+        #     [np.sqrt(0.5 * back_right_ankle ** 2), -np.sqrt(0.5 * back_right_ankle ** 2), 0]) + back_right_knee_xyz
 
-        points = np.vstack([front_left_hip_xyz,
-                            front_left_knee_xyz,
-                            front_left_toe_xyz,
-                            front_right_hip_xyz,
-                            front_right_knee_xyz,
-                            front_right_toe_xyz,
-                            back_left_hip_xyz,
-                            back_left_knee_xyz,
-                            back_left_toe_xyz,
-                            back_right_hip_xyz,
-                            back_right_knee_xyz,
-                            back_right_toe_xyz,
-                            ])
+        # points = np.vstack([front_left_hip_xyz,
+        #                     front_left_knee_xyz,
+        #                     front_left_toe_xyz,
+        #                     front_right_hip_xyz,
+        #                     front_right_knee_xyz,
+        #                     front_right_toe_xyz,
+        #                     back_left_hip_xyz,
+        #                     back_left_knee_xyz,
+        #                     back_left_toe_xyz,
+        #                     back_right_hip_xyz,
+        #                     back_right_knee_xyz,
+        #                     back_right_toe_xyz,
+        #                     ])
 
-        # define the type of connections [FIXED ARCHITECTURE]
-        connectivity_mat = np.array(
-            [[150, np.inf, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-             [0, 150, np.inf, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-             [0, 0, 0, 150, np.inf, 0, 0, 0, 0, 0, 0, 0],
-             [0, 0, 0, 0, 150, np.inf, 0, 0, 0, 0, 0, 0],
-             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-             [0, 0, 0, 0, 0, 0, 150, np.inf, 0, 0, 0, 0],
-             [0, 0, 0, 0, 0, 0, 0, 150, np.inf, 0, 0, 0],
-             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-             [0, 0, 0, 0, 0, 0, 0, 0, 0, 150, np.inf, 0],
-             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 150, np.inf],
-             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], ]
-        )
+        # # define the type of connections [FIXED ARCHITECTURE]
+        # connectivity_mat = np.array(
+        #     [[150, np.inf, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        #      [0, 150, np.inf, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        #      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        #      [0, 0, 0, 150, np.inf, 0, 0, 0, 0, 0, 0, 0],
+        #      [0, 0, 0, 0, 150, np.inf, 0, 0, 0, 0, 0, 0],
+        #      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        #      [0, 0, 0, 0, 0, 0, 150, np.inf, 0, 0, 0, 0],
+        #      [0, 0, 0, 0, 0, 0, 0, 150, np.inf, 0, 0, 0],
+        #      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        #      [0, 0, 0, 0, 0, 0, 0, 0, 0, 150, np.inf, 0],
+        #      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 150, np.inf],
+        #      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], ]
+        # )
+
+        points, connectivity_mat = self.get_fixed_morphology()
+
+        return points, connectivity_mat
+    
+    def get_fixed_morphology(self):
+        # Morphologie fixe "standard"
+        points = np.array([
+            [0.2, 0.2, 0], [0.35, 0.35, 0], [0.45, 0.45, 0],
+            [-0.2, 0.2, 0], [-0.35, 0.35, 0], [-0.45, 0.45, 0],
+            [-0.2, -0.2, 0], [-0.35, -0.35, 0], [-0.45, -0.45, 0],
+            [0.2, -0.2, 0], [0.35, -0.35, 0], [0.45, -0.45, 0]
+        ])
+        connectivity_mat = np.array([
+            [150, np.inf, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 150, np.inf, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 150, np.inf, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 150, np.inf, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 150, np.inf, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 150, np.inf, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 150, np.inf, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 150, np.inf],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        ])
         return points, connectivity_mat
 
     def evaluate_individual(self, genotype):
@@ -146,27 +174,18 @@ class AntWorld(World):
 
         observations, info = envs.reset()
         done_mask = np.zeros(self.n_repeats, dtype=bool)
-        
-        # print("info:", info)
-        # print("type(info):", type(info))
-
+    
         # initial_positions = np.array([[info_["x_position"], info_["y_position"]] for info_ in info])
         initial_positions = np.stack((info["x_position"], info["y_position"]), axis=-1)
         previous_positions = initial_positions.copy()
 
-        print("initial_positions:", initial_positions)
-        # print("shape:", np.shape(initial_positions))
+        # print("initial_positions:", initial_positions)
 
         previous_angles = np.arctan2(initial_positions[:, 1], initial_positions[:, 0])
 
         for step in range(self.n_steps):
             actions = np.where(done_mask[:, None], 0, self.controller.get_action(observations.T).T)
             observations, _, dones, truncated, infos = envs.step(actions)
-
-            # Positions actuelles
-
-            # print(f"type(infos) = {type(infos)}")
-            # print(f"Sample infos content: {list(infos)[:3]}")
 
             x_pos = infos["x_position"]
             y_pos = infos["y_position"]
@@ -189,16 +208,35 @@ class AntWorld(World):
 
             # Penalization for frontier proximity (rayon max ~1.2 par exemple)
             radius = np.linalg.norm(current_positions, axis=1)
-            penalty_offtrack = np.where(radius > 1.2, -5.0, 0.0)
+            upper_radius_too_far = 2
+            lower_radius_too_far = 1.0
+            penalty_too_far = np.where((radius > upper_radius_too_far), -(radius - upper_radius_too_far)**2, 0.0)
+            penalty_too_close = np.where((radius < lower_radius_too_far), -(radius - lower_radius_too_far)**2, 0.0)
+            combined_offtrack_penalty = penalty_too_far + penalty_too_close
 
-            # Conbined total reward
-            combined_reward = 5.0 * angular_reward + 100000.0 * tangential_reward + penalty_offtrack
-            # combined_reward = 100*(current_positions[0] - previous_positions[0])
+            # Wanted next move direction
+            goal_radius = 1.5
+            position_step = 0.25
+            vec=np.array([-radius*np.cos(current_angles),radius*np.sin(current_angles)])
+            goal_point = current_positions + vec.T*position_step
+
+            # MONO-OBJECTIF GLOBAL
+            # combined_reward = 5.0 * angular_reward + 100000.0 * tangential_reward + penalty_offtrack
+            # print("radius:", radius)
+            # print("goal_radius:", goal_radius)
+            # print("goal_point:", goal_point, goal_point.shape)
+            # print("current_positions:", current_positions, current_positions.shape)
+            combined_reward = -20*(radius - goal_radius)**2 + 20*(np.linalg.norm(current_positions - goal_point, axis=1))**2 + combined_offtrack_penalty
 
             rewards_full[step, ~done_mask] = combined_reward[~done_mask]
 
+
+            circle_deviation = (radius - 1.0) ** 2  # Distance quadratique au rayon 1   ####### TODO
+
+            # MULTI-OBJECTIFS POUR NSGA-II
             # For visualisation
-            multi_obj_reward = np.array([angular_reward, tangential_reward]).T
+            # multi_obj_reward = np.array([angular_reward, tangential_reward]).T        ####### INITAL 
+            multi_obj_reward = np.array([tangential_reward, -5.0 * circle_deviation]).T
             multi_obj_rewards_full[step, ~done_mask] = multi_obj_reward[~done_mask]
 
             # Update
@@ -233,6 +271,7 @@ def run_EA_multi(ea_multi, world):
             _, fit_ind = world.evaluate_individual(genotype)
             fitnesses_gen[index] = fit_ind
         ea_multi.tell(pop, fitnesses_gen)
+        
 
 
 def generate_best_individual_video(world, video_name: str = 'EvoRob3_video.mp4'):
@@ -289,52 +328,80 @@ def visualise_individual(genotype):
     print(np.sum(rewards_list))
 
 
+def load_best_individual(result_folder: str, generation: int = 99):
+    filepath = os.path.join(result_folder, str(generation), "x_best.npy")
+    if not os.path.exists(filepath):
+        raise FileNotFoundError(f"Best individual not found at: {filepath}")
+    return np.load(filepath)
+
+
 def main():
     # %% Understanding the world
-    genotype = np.random.uniform(-1, 1, 953)  # 8 body parameters, 945 NN weights
+    genotype = np.random.uniform(-1, 1, 945)  # 8 body parameters, 945 NN weights
     visualise_individual(genotype)
 
     # %% Optimise single-objective
-    world = AntWorld()
-    n_parameters = world.n_params
+    if STRATEGY == 'CMAES':
+        world = AntWorld()
+        n_parameters = world.n_params
 
-    population_size = 250
-    CMAES_opts["min"] = -1
-    CMAES_opts["max"] = 1
-    CMAES_opts["num_parents"] = 15
-    CMAES_opts["num_generations"] = 100
-    CMAES_opts["mutation_sigma"] = 0.33
+        population_size = 250
+        CMAES_opts["min"] = -1
+        CMAES_opts["max"] = 1
+        CMAES_opts["num_parents"] = population_size
+        CMAES_opts["num_generations"] = 100
+        CMAES_opts["mutation_sigma"] = 0.33
 
-    results_dir = os.path.join(ROOT_DIR, 'results', ENV_NAME, 'single')
-    ea_single = CMAES_sol(population_size, n_parameters, CMAES_opts, results_dir)
+        results_dir = os.path.join(ROOT_DIR, 'results', ENV_NAME, 'single')
+        ea_single = CMAES_sol(population_size, n_parameters, CMAES_opts, results_dir)
 
-    run_EA_single(ea_single, world)
+        run_EA_single(ea_single, world)
 
-    # # %% Optimise multi-objective
-    # # TODO implement the NSGAII
-    # world = AntWorld()
-    # n_parameters = world.n_params
+    # %% Optimise multi-objective
+    # TODO implement the NSGAII
+    if STRATEGY == 'NSGAII':
+        world = AntWorld()
+        n_parameters = world.n_params
 
-    # population_size = 250
-    # NSGA_opts["min"] = -1
-    # NSGA_opts["max"] = 1
-    # NSGA_opts["num_parents"] = population_size
-    # NSGA_opts["num_generations"] = 100
-    # NSGA_opts["mutation_prob"] = 0.3
-    # NSGA_opts["crossover_prob"] = 0.5
+        population_size = 50 #250
+        NSGA_opts["min"] = -1
+        NSGA_opts["max"] = 1
+        NSGA_opts["num_parents"] = population_size
+        NSGA_opts["num_generations"] = 100
+        NSGA_opts["mutation_prob"] = 0.3
+        NSGA_opts["crossover_prob"] = 0.5
 
-    # results_dir = os.path.join(ROOT_DIR, 'results', ENV_NAME, 'multi')
-    # ea_multi_obj = NSGAII_sol(population_size, n_parameters, NSGA_opts, results_dir)
+        results_dir = os.path.join(ROOT_DIR, "results", "Ant_custom", "multi")
 
-    # run_EA_multi(ea_multi_obj, world)
+        # best_genotype = load_best_individual(results_dir, generation=generation)
+        
+        ea_multi_obj = NSGAII_sol(population_size, n_parameters, NSGA_opts, results_dir)
+
+        # print("Best genotype from generation", generation, ":")
+        # visualise_individual(best_genotype)
+
+        print("Starting multi-objective evolution...")
+        run_EA_multi(ea_multi_obj, world)
 
     # %% visualise
     # TODO: Make a video of the best individual, and plot the fitness curve.
-    best_individual = np.load(os.path.join(results_dir, "99", "x_best.npy"))
+
+    # if ea_multi_obj.current_gen % 5 == 0:
+    #     gen_dir = os.path.join(results_dir, str(ea_multi_obj.current_gen))
+    #     x_best_path = os.path.join(gen_dir, "x_best.npy")
+    #     if os.path.exists(x_best_path):
+    #         best_individual = np.load(x_best_path)
+    #         video_path = os.path.join(gen_dir, "best_individual.mp4")
+    #         world.evaluate_individual(best_individual, make_video=True, video_name=video_path)
+    
+    best_individual = np.load(os.path.join(results_dir, ea_multi_obj.n_gen, "x_best.npy"))
 
     points, connectivity_mat = world.geno2pheno(best_individual)
+    
     robot = AntRobot(points, connectivity_mat, world.joint_limits, world.joint_axis, verbose=False)
+    
     robot.xml = robot.define_robot()
+
     robot.write_xml()
 
     # % Defining the Robot environment in MuJoCo
@@ -346,6 +413,7 @@ def main():
     with open(world.world_file, "w") as f:
         f.write(world_xml)
 
+    print("Expected to generate a video of the best individual.")
     generate_best_individual_video(world)
 
 

@@ -60,8 +60,6 @@ class NSGAII_sol():
         parents_population, parents_fitness = self.sort_and_select_parents(
             solutions, function_values, self.n_parents
         )
-
-
         #% Some bookkeeping
         self.full_fitness.append(function_values)
         self.full_x.append(solutions)
@@ -74,21 +72,22 @@ class NSGAII_sol():
             self.f_best_so_far = function_values[best_index]
             self.x_best_so_far = solutions[best_index]
 
-        if self.current_gen % 5 == 0:
-            print(f"Best fitness in generation {self.current_gen}: {self.f_best_so_far}\n"
-                  f"Mean pop fitness: {self.f.mean()} +- {self.f.std()}\n"
-                  )
+        print("Current generation:", self.current_gen)
+        print(f"Best fitness in generation {self.current_gen}: {self.f_best_so_far}\n"
+                f"Mean pop fitness: {self.f.mean()} +- {self.f.std()}\n"
+                )
 
         if save_checkpoint:
             self.save_checkpoint()
         self.current_gen += 1
 
 
-
     def initialise_x0(self):
         return np.random.uniform(low=self.min, high=self.max, size=(self.n_pop, self.n_params))
 
     def create_children(self, population_size):
+        if self.n_pop < 4:
+            raise ValueError("n_pop must be at least 4 for DE to sample distinct r0, r1, r2 != i")
         new_offspring = np.empty((population_size, self.n_params))
         for i in range(population_size):
             r0 = i
@@ -109,7 +108,6 @@ class NSGAII_sol():
                     new_offspring[i][j] = copy.deepcopy(self.x[r0][j] + self.F * (self.x[r1][j] - self.x[r2][j]))
                 else:
                     new_offspring[i][j] = copy.deepcopy(self.x[r0][j])
-
         mutated_population = np.clip(new_offspring, self.min, self.max)
         return mutated_population
 
