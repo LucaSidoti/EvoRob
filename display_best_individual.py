@@ -15,7 +15,7 @@ def visualise_individual(world, genotype):
 
     env = gym.make("Ant_custom", robot_path=world.world_file, render_mode="human")
     observations, info = env.reset()
-    for _ in range(1000):
+    for _ in range(10000):
         action = world.controller.get_action(observations)
         observations, reward, terminated, truncated, info = env.step(action)
         if terminated:
@@ -26,15 +26,16 @@ if __name__ == "__main__":
     ENV_NAME = "Ant_custom"
     ROOT_DIR = get_project_root()
     results_dir = os.path.join(ROOT_DIR, "results", ENV_NAME, "multi")
-    generation = 2
 
-    best_genotype = load_best_individual(results_dir, generation=generation)
+    for generation in range(0, 10):
+        generation = 35
+        best_genotype = load_best_individual(results_dir, generation=generation)
 
-    # Create the Ant world (fixed morphology)
-    world = AntWorld()
+        # Create the Ant world (fixed morphology)
+        world = AntWorld()
 
-    # Option 1: visualize in real time
-    visualise_individual(world, best_genotype)
+        # Option 1: visualize in real time
+        visualise_individual(world, best_genotype)
 
-    # Option 2: save as video
-    # generate_best_individual_video(world, video_name=f"gen_{generation}_best.mp4")
+        # Option 2: save as video
+        # generate_best_individual_video(world, video_name=f"gen_{generation}_best.mp4")

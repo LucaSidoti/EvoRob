@@ -21,12 +21,13 @@ import os
 ROOT_DIR = get_project_root()
 ENV_NAME = 'Ant_custom'
 STRATEGY = 'NSGAII'  # 'CMAES' for multi-objective evolution
+radius_cum_sum = 0
 
 
 class AntWorld(World):
     def __init__(self, ):
         action_space = 8  # https://gymnasium.farama.org/environments/mujoco/ant/#action-space
-        state_space = 27  # https://gymnasium.farama.org/environments/mujoco/ant/#observation-space
+        state_space = 30  # https://gymnasium.farama.org/environments/mujoco/ant/#observation-space
 
         self.n_repeats = 3
         self.n_steps = 1000
@@ -141,6 +142,7 @@ class AntWorld(World):
         return points, connectivity_mat
 
     def evaluate_individual(self, genotype):
+        global radius_cum_sum
         points, connectivity_mat = self.geno2pheno(genotype)
 
         robot = AntRobot(points, connectivity_mat, self.joint_limits, self.joint_axis, verbose=False)
@@ -187,6 +189,8 @@ class AntWorld(World):
             actions = np.where(done_mask[:, None], 0, self.controller.get_action(observations.T).T)
             observations, _, dones, truncated, infos = envs.step(actions)
 
+            # observations = np.concatenate(observation, )
+
             x_pos = infos["x_position"]
             y_pos = infos["y_position"]
 
@@ -214,19 +218,28 @@ class AntWorld(World):
             penalty_too_close = np.where((radius < lower_radius_too_far), -(radius - lower_radius_too_far)**2, 0.0)
             combined_offtrack_penalty = penalty_too_far + penalty_too_close
 
-            # Wanted next move direction
+            # Introduce cumulative sum of radius errors
             goal_radius = 1.5
-            position_step = 0.25
-            vec=np.array([-radius*np.cos(current_angles),radius*np.sin(current_angles)])
-            goal_point = current_positions + vec.T*position_step
+            radius_cum_sum += (radius - goal_radius)**2
+
+            
+            # position_step = 0.25
+            exp_traj_vec=np.array([-radius*np.cos(current_angles),radius*np.sin(current_angles)])
+            # goal_point = current_positions + exp_traj_vec.T*position_step
+
+            current_spd_vec = np.stack([infos["x_velocity"], infos["y_velocity"]], axis=0)
+            
 
             # MONO-OBJECTIF GLOBAL
-            # combined_reward = 5.0 * angular_reward + 100000.0 * tangential_reward + penalty_offtrack
-            # print("radius:", radius)
-            # print("goal_radius:", goal_radius)
-            # print("goal_point:", goal_point, goal_point.shape)
-            # print("current_positions:", current_positions, current_positions.shape)
-            combined_reward = -20*(radius - goal_radius)**2 + 20*(np.linalg.norm(current_positions - goal_point, axis=1))**2 + combined_offtrack_penalty
+            # combined_reward = -20*(radius - goal_radius)**2 + 20*(np.linalg.norm(current_positions - goal_point, axis=1))**2 + combined_offtrack_penalty
+
+            # print("-20*(radius - goal_radius)**2:", -20*(radius - goal_radius)**2)
+            # print("0*np.linalg.norm(current_spd_vec, axis=0):", 0*np.linalg.norm(current_spd_vec, axis=0))
+            # print("20*(np.sum(current_spd_vec * exp_traj_vec, axis=0)):", 20*(np.sum(current_spd_vec * exp_traj_vec, axis=0)))
+            # print("- 5e-7*(radius_cum_sum)**4:", - 5e-7*(radius_cum_sum)**4)
+            
+            combined_reward = - 5e-8*(radius_cum_sum)**4 #+ 0*np.linalg.norm(current_spd_vec, axis=0) + 200*(np.sum(current_spd_vec * exp_traj_vec, axis=0)) + combined_offtrack_penalty
+            # print(combined_reward)
 
             rewards_full[step, ~done_mask] = combined_reward[~done_mask]
 
@@ -250,6 +263,7 @@ class AntWorld(World):
         final_rewards = np.sum(rewards_full, axis=0)
         final_multi_obj_rewards = np.sum(multi_obj_rewards_full, axis=0)
         envs.close()
+        radius_cum_sum = 0
         return np.mean(final_rewards), np.mean(final_multi_obj_rewards, axis=0)
 
 
@@ -337,7 +351,10 @@ def load_best_individual(result_folder: str, generation: int = 99):
 
 def main():
     # %% Understanding the world
-    genotype = np.random.uniform(-1, 1, 945)  # 8 body parameters, 945 NN weights
+    state_size = 30
+    action_size = 8
+    genotype_size = (state_size * state_size) + (state_size * action_size)
+    genotype = np.random.uniform(-1, 1, genotype_size)  # 8 body parameters, 945 NN weights
     visualise_individual(genotype)
 
     # %% Optimise single-objective
@@ -363,13 +380,13 @@ def main():
         world = AntWorld()
         n_parameters = world.n_params
 
-        population_size = 50 #250
+        population_size = 150 #250
         NSGA_opts["min"] = -1
         NSGA_opts["max"] = 1
         NSGA_opts["num_parents"] = population_size
         NSGA_opts["num_generations"] = 100
         NSGA_opts["mutation_prob"] = 0.3
-        NSGA_opts["crossover_prob"] = 0.5
+        NSGA_opts["crossover_prob"] = 0.65
 
         results_dir = os.path.join(ROOT_DIR, "results", "Ant_custom", "multi")
 
