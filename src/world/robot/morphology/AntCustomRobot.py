@@ -195,7 +195,7 @@ class AntRobot:
                                            "axis": axis,
                                            "range": f"{self.joint_limits[joint_ind[0]][0]} "
                                                     f"{self.joint_limits[joint_ind[0]][1]}",
-                                           "name": joint_name,
+                                           "name": joint_name, 
                                            })
                     sphere_xml = xml.SubElement(segment_xml, "body",
                                                 attrib={"pos": f"{joint_pos[0]} {joint_pos[1]} {joint_pos[2]}",
@@ -232,6 +232,7 @@ class AntRobot:
                 xml.SubElement(sensors_xml, "accelerometer", attrib={"site": site_name})
                 xml.SubElement(sensors_xml, "gyro", attrib={"site": site_name})
                 xml.SubElement(sensors_xml, "magnetometer", attrib={"site": site_name})
+
         return sensors_xml
 
     def define_contacts(self):

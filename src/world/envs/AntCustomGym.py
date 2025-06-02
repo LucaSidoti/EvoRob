@@ -91,7 +91,7 @@ class AntCustomEnv(MujocoEnv, utils.EzPickle):
             "render_fps": int(np.round(1.0 / self.dt)),
         }
 
-        obs_size = self.data.qpos.size + self.data.qvel.size
+        obs_size = self.data.qpos.size + self.data.qvel.size + 3 # 1 pour le yaw, in_dist, ext_dist
         obs_size -= 2 * exclude_current_positions_from_observation
         obs_size += (
             self.data.cfrc_ext[1:].size * include_cfrc_ext_in_observation
@@ -106,6 +106,9 @@ class AntCustomEnv(MujocoEnv, utils.EzPickle):
             "qpos": self.data.qpos.size
             - 2 * exclude_current_positions_from_observation,
             "qvel": self.data.qvel.size,
+            "yaw": 1,
+            "in_dist": 1,
+            "ext_dist": 1,
         }
         self.body_ids = None
         self.force = None
@@ -166,11 +169,20 @@ class AntCustomEnv(MujocoEnv, utils.EzPickle):
     def _get_obs(self):
         position = self.data.qpos.flat.copy()
         velocity = self.data.qvel.flat.copy()
+        # Compute yaw from quaternion
+        # qpos[3:7] are qw, qx, qy, qz
+        qw, qx, qy, qz = position[3], position[4], position[5], position[6]
+        yaw = np.arctan2(2.0 * (qw * qz + qx * qy),
+                        1.0 - 2.0 * (qy * qy + qz * qz))
+        pos_radius = np.linalg.norm(np.array([position[0], position[1]]))
+        in_dist = pos_radius - 0.5
+        ext_dist = 3 - pos_radius
+    
 
         if self._exclude_current_positions_from_observation:
             position = position[2:]
 
-        return np.concatenate((position, velocity))
+        return np.concatenate((position, velocity, [yaw], [in_dist], [ext_dist]))
 
 
     def apply_force(self):
