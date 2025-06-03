@@ -34,7 +34,7 @@ class AntRobot:
         self.fixed_base = fixed_base
         self.removed_nodes = []
         self.connectivity_mat = connectivity_mat
-        self.offset = np.array([0, 0, 0.75 + z_offset])
+        self.offset = np.array([0, 2, 0.75 + z_offset]) #TODO
         self.points = points
         self.n_points = points.shape[0]
         self.point_names = [f"p{i}" for i in range(self.n_points)]
@@ -236,12 +236,31 @@ class AntRobot:
 
     def define_contacts(self):
         contact_xml = xml.Element("contact")
+
+        # Add default contacts with the floor
         for structure in self.limbs:
             rods = structure[0]
             for rod in rods:
                 geom_name = f"geom_{rod[0]}.{rod[1]}"
-                xml.SubElement(contact_xml, "pair", attrib={"geom1": geom_name,
-                                                                "geom2": "floor",})
+                xml.SubElement(contact_xml, "pair", attrib={
+                    "geom1": geom_name,
+                    "geom2": "floor",
+                })
+
+        # Add custom contacts with the outer ring
+        ring_contact_rods = [
+            (0, 1), (1, 2),
+            (3, 4), (4, 5),
+            (6, 7), (7, 8),
+            (9, 10), (10, 11),
+        ]
+        for i, j in ring_contact_rods:
+            geom_name = f"geom_{i}.{j}"
+            xml.SubElement(contact_xml, "pair", attrib={
+                "geom1": geom_name,
+                "geom2": "outer_ring",
+            })
+
         return contact_xml
 
 def default_setting(props=properties):
