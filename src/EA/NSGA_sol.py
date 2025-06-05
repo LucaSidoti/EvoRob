@@ -90,15 +90,23 @@ class NSGAII_sol():
             raise ValueError("n_pop must be at least 4 for DE to sample distinct r0, r1, r2 != i")
         new_offspring = np.empty((population_size, self.n_params))
         for i in range(population_size):
-            r0 = i
-            while (r0 == i):
-                r0 = np.floor(np.random.random() * self.n_pop).astype(int)
+            # r0 = i
+            # while (r0 == i):
+            #     r0 = np.floor(np.random.random() * self.n_pop).astype(int)
+            # r1 = r0
+            # while (r1 == r0 or r1 == i):
+            #     r1 = np.floor(np.random.random() * self.n_pop).astype(int)
+            # r2 = r1
+            # while (r2 == r1 or r2 == r0 or r2 == i):
+            #     r2 = np.floor(np.random.random() * self.n_pop).astype(int)
+
+            r0 = np.random.randint(0, self.n_parents)
             r1 = r0
-            while (r1 == r0 or r1 == i):
-                r1 = np.floor(np.random.random() * self.n_pop).astype(int)
+            while r1 == r0:
+                r1 = np.random.randint(0, self.n_parents)
             r2 = r1
-            while (r2 == r1 or r2 == r0 or r2 == i):
-                r2 = np.floor(np.random.random() * self.n_pop).astype(int)
+            while r2 == r0 or r2 == r1:
+                r2 = np.random.randint(0, self.n_parents)
 
             jrand = np.floor(np.random.random() * population_size).astype(int)
 
