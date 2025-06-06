@@ -32,7 +32,7 @@
     <!-- Outer cylinder: platform #TODO: Chnage 0.4 to proper heigth -->
     <geom name="outer_ring"
           type="cylinder"
-          pos="0 0 0.4"
+          pos="0 0 2.0"
           size="3.0 0.05" 
           material="platform_mat"
           condim="4"/>

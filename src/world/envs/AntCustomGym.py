@@ -6,6 +6,7 @@ from gymnasium import utils
 from gymnasium.envs.mujoco import MujocoEnv
 from gymnasium.spaces import Box
 from src.utils.geometry import quat2rot
+import mujoco
 
 DEFAULT_CAMERA_CONFIG = {
     "distance": 5,
@@ -116,52 +117,82 @@ class AntCustomEnv(MujocoEnv, utils.EzPickle):
 
 
     def step(self, action):
-        xy_position_before = self.data.body(self._main_body).xpos[:2].copy()
-        if self.body_ids is not None:
-            self.apply_force()
+        # --- Store previous position ---
+        position = self.previous_position
+
+        # --- Apply external perturbation, if any ---
+        # if self.body_ids is not None:
+        #     self.apply_force()
+
+        # --- Simulate one step ---
         self.do_simulation(action, self.frame_skip)
-        xy_position_after = self.data.body(self._main_body).xpos[:2].copy()
 
-        xy_velocity = (xy_position_after - xy_position_before) / self.dt
-        x_velocity, y_velocity = xy_velocity
+        # --- Get new position and radius ---
+        new_position = self.data.qpos[:2].copy()
+        radius = np.linalg.norm(new_position)
+        angle = np.arctan2(new_position[1], new_position[0])
 
-        forward_reward = x_velocity * self._forward_reward_weight
-        healthy_reward = 1
-        ctrl_cost = np.linalg.norm(action)**2 * self._ctrl_cost_weight
-        cfrc_cost = np.linalg.norm( self.data.cfrc_ext[1:])**2 * self._cfrc_cost_weight
+        # --- Update cumulative angle for full-circle bonus ---
+        dtheta = np.mod(angle - self.previous_angle + np.pi, 2 * np.pi) - np.pi
+        self.cumulative_angle += dtheta
+        self.previous_angle = angle
+        circle_bonus = 0.0
+        if abs(self.cumulative_angle) >= 2 * np.pi:
+            circle_bonus = 50.0
+            self.cumulative_angle = 0.0
 
-        #TODO
-        reward = healthy_reward + forward_reward -ctrl_cost -cfrc_cost
+        # --- Compute upright alignment ---
+        body_id = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_BODY, "Base")
+        rotmat = self.data.xmat[body_id].reshape(3, 3)
+        upright_alignment = np.dot(rotmat[:, 2], np.array([0, 0, 1]))
+
+        # --- Reward function ---
+        reward_radius = -5.0 * (radius - 2.0) ** 2
+        reward_upright = 5.0 * upright_alignment
+        reward = reward_radius + reward_upright + circle_bonus
+
+        # --- Observation ---
         observation = self._get_obs()
 
-        info = {
-            "reward_forward": forward_reward,
-            "healthy_reward": healthy_reward,
-            "ctrl_cost": ctrl_cost,
-            "cfrc_cost": cfrc_cost,
-            "x_position": self.data.qpos[0],
-            "y_position": self.data.qpos[1],
-            "distance_from_origin": np.linalg.norm(self.data.qpos[0:2], ord=2),
-            "x_velocity": x_velocity,
-            "y_velocity": y_velocity,
-        }
+        # --- Termination ---
+        z = self.data.qpos[2]
+        terminated = (
+            z < 0.2 or z > 2.8 or radius > 2.5 or upright_alignment < 0.3 or
+            np.isinf(observation).any() or
+            np.any(np.isnan(self.data.qacc)) or
+            np.any(np.isinf(self.data.qacc)) or
+            np.any(np.abs(self.data.qacc) > 1e6)
+        )
         terminated = False
-        # Check for NaN, Inf, or huge values
-        qacc = self.data.qacc
-        if np.any(np.isnan(qacc)) or np.any(np.isinf(qacc)) or np.any(np.abs(qacc) > 1e6):
-            DOF = np.argwhere((np.isnan(qacc)) + (np.isinf(qacc)) + (np.abs(qacc) > 1e6)).squeeze()[0]
-            print(ValueError(f'MuJoCo Warning: Nan, Inf or huge value in QACC at DOF {DOF}'))
-            terminated = True
-        if self.data.qpos[2] < 0.2 or self.data.qpos[2] > 1.0:
-            terminated = True
-        if np.isinf(observation).any():
-            terminated = True
+        if terminated and (
+            np.any(np.isnan(self.data.qacc)) or
+            np.any(np.isinf(self.data.qacc)) or
+            np.any(np.abs(self.data.qacc) > 1e6)
+        ):
+            bad_dof = np.argwhere(
+                np.isnan(self.data.qacc) | np.isinf(self.data.qacc) | (np.abs(self.data.qacc) > 1e6)
+            ).squeeze()[0]
+            print(ValueError(f"MuJoCo Warning: NaN, Inf or huge value in QACC at DOF {bad_dof}"))
 
+        # --- Info ---
+        info = {
+            "reward_radius": reward_radius,
+            "reward_upright": reward_upright,
+            "circle_bonus": circle_bonus,
+            "radius": radius,
+            "upright_alignment": upright_alignment,
+        }
+
+        # --- Update state ---
         self.previous_state = observation
+        self.previous_position = new_position
 
         if self.render_mode == "human":
             self.render()
+
         return observation, reward, terminated, False, info
+
+
 
     def _get_obs(self):
         position = self.data.qpos.flat.copy()
@@ -196,6 +227,9 @@ class AntCustomEnv(MujocoEnv, utils.EzPickle):
             * self.np_random.standard_normal(self.model.nv)
         )
         self.set_state(qpos, qvel)
+        self.previous_position = self.data.qpos[:2].copy()
+        self.previous_angle = np.arctan2(self.data.qpos[1], self.data.qpos[0])
+        self.cumulative_angle = 0.0
         observation = self._get_obs()
         return observation
 

@@ -5,90 +5,103 @@
         <geom condim="3" conaffinity="0" density="5.0" friction="1 0.5 0.5" margin="0.01" rgba="0.8 0.6 0.4 1"/>
     </default>
     <worldbody>
-        <body name="Base" pos="0.0 0.0 0.75">
-            <joint type="free" armature="0" damping="0" limited="false" margin="0.01" pos="0 0 0"/>
-            <geom type="sphere" rgba="0.8 0.6 0.4 1" size="0.25"/>
-            <camera name="track" mode="trackcom" pos="0 -3 0.3" xyaxes="1 0 0 0 0 1"/>
-            <geom name="limb0" type="capsule" fromto="0 0 0 0.2 0.2 0.0" size="0.08"/>
-            <body name="rod_0.1" pos="0.2580989624470179 0.2580989624470179 0.0">
-                <geom type="capsule" fromto="-0.05809896244701793 -0.05809896244701793 -0.0 0.05809896244701793 0.05809896244701793 0.0" size="0.08" name="geom_0.1"/>
-                <site pos="0 0 0" quat="0.9238795325112867 0.0 0.0 0.3826834323650898" name="site_0.1"/>
-                <joint type="hinge" pos="-0.05809896244701793 -0.05809896244701793 -0.0" axis="0 0 1" range="-30 30" name="joint_Base=rod_0.1"/>
-                <body pos="-0.05809896244701793 -0.05809896244701793 -0.0" name="p0">
-                    <site name="p0"/>
-                </body>
-                <body name="rod_1.2" pos="0.1461210707046388 0.1461210707046388 0.0">
-                    <geom type="capsule" fromto="-0.08802210825762088 -0.08802210825762088 -0.0 0.08802210825762088 0.08802210825762088 0.0" size="0.08" name="geom_1.2"/>
-                    <site pos="0 0 0" quat="0.9238795325112867 0.0 0.0 0.38268343236508984" name="site_1.2"/>
-                    <joint type="hinge" pos="-0.08802210825762088 -0.08802210825762088 -0.0" axis="-1 1 0" range="30 70" name="joint_rod_0.1=rod_1.2"/>
-                    <body pos="-0.08802210825762088 -0.08802210825762088 -0.0" name="p1">
-                        <site name="p1"/>
-                    </body>
-                </body>
+    <body name="Base" pos="0.0 0.0 2.5">
+        <inertial pos="0 0 0" mass="300.0" diaginertia="1 1 1"/>
+        <joint type="free" armature="0" damping="0" limited="false" margin="0.01" pos="0 0 0"/>
+        <geom name="geom_0.0" type="sphere" rgba="0.8 0.6 0.4 1" size="0.2"/>
+        <geom type="box" size="0.1 0.1 0.05" pos="0 0 -0.2" rgba="0 0 0 0" density="200"/>
+        <camera name="track" mode="trackcom" pos="0 -3 0.3" xyaxes="1 0 0 0 0 1"/>
+
+        <!-- Limb 0 (45°) -->
+        <body name="rod_0.1" pos="0.2581 0.2581 0.0">
+            <geom name="geom_0.1" type="capsule" fromto="-0.0581 -0.0581 0 0.0581 0.0581 0" size="0.08" density="5.0"/>
+            <site name="site_0.1" pos="0 0 0" quat="0.9238795 0.0 0.0 0.3826834"/>
+            <joint name="joint_Base=rod_0.1" type="hinge" pos="-0.0581 -0.0581 0" axis="0 0 1" range="-30 30"/>
+            <body name="p0" pos="-0.0581 -0.0581 0">
+                <site name="p0"/>
             </body>
-            <geom name="limb1" type="capsule" fromto="0 0 0 -0.2 0.2 0.0" size="0.08"/>
-            <body name="rod_3.4" pos="-0.29813791119078226 0.29813791119078226 0.0">
-                <geom type="capsule" fromto="0.09813791119078225 -0.09813791119078225 -0.0 -0.09813791119078225 0.09813791119078225 0.0" size="0.08" name="geom_3.4"/>
-                <site pos="0 0 0" quat="0.38268343236508984 0.0 -0.0 0.9238795325112867" name="site_3.4"/>
-                <joint type="hinge" pos="0.09813791119078225 -0.09813791119078225 -0.0" axis="0 0 1" range="-30 30" name="joint_Base=rod_3.4"/>
-                <body pos="0.09813791119078225 -0.09813791119078225 -0.0" name="p3">
-                    <site name="p3"/>
-                </body>
-                <body name="rod_4.5" pos="-0.21227318122106933 0.21227318122106933 0.0">
-                    <geom type="capsule" fromto="0.11413527003028709 -0.11413527003028709 -0.0 -0.11413527003028709 0.11413527003028709 0.0" size="0.08" name="geom_4.5"/>
-                    <site pos="0 0 0" quat="0.38268343236508984 0.0 -0.0 0.9238795325112867" name="site_4.5"/>
-                    <joint type="hinge" pos="0.11413527003028709 -0.11413527003028709 -0.0" axis="1 1 0" range="-70 -30" name="joint_rod_3.4=rod_4.5"/>
-                    <body pos="0.11413527003028709 -0.11413527003028709 -0.0" name="p4">
-                        <site name="p4"/>
-                    </body>
-                </body>
-            </body>
-            <geom name="limb2" type="capsule" fromto="0 0 0 -0.2 -0.2 0.0" size="0.08"/>
-            <body name="rod_6.7" pos="-0.2881535313420181 -0.2881535313420181 0.0">
-                <geom type="capsule" fromto="0.08815353134201809 0.08815353134201809 -0.0 -0.08815353134201809 -0.08815353134201809 0.0" size="0.08" name="geom_6.7"/>
-                <site pos="0 0 0" quat="0.38268343236508984 0.0 -0.0 -0.9238795325112867" name="site_6.7"/>
-                <joint type="hinge" pos="0.08815353134201809 0.08815353134201809 -0.0" axis="0 0 1" range="-30 30" name="joint_Base=rod_6.7"/>
-                <body pos="0.08815353134201809 0.08815353134201809 -0.0" name="p6">
-                    <site name="p6"/>
-                </body>
-                <body name="rod_7.8" pos="-0.19130365958827775 -0.19130365958827775 0.0">
-                    <geom type="capsule" fromto="0.10315012824625966 0.10315012824625966 -0.0 -0.10315012824625966 -0.10315012824625966 0.0" size="0.08" name="geom_7.8"/>
-                    <site pos="0 0 0" quat="0.38268343236508984 0.0 -0.0 -0.9238795325112867" name="site_7.8"/>
-                    <joint type="hinge" pos="0.10315012824625966 0.10315012824625966 -0.0" axis="-1 1 0" range="-70 -30" name="joint_rod_6.7=rod_7.8"/>
-                    <body pos="0.10315012824625966 0.10315012824625966 -0.0" name="p7">
-                        <site name="p7"/>
-                    </body>
-                </body>
-            </body>
-            <geom name="limb3" type="capsule" fromto="0 0 0 0.2 -0.2 0.0" size="0.08"/>
-            <body name="rod_9.10" pos="0.3225772218730317 -0.3225772218730317 0.0">
-                <geom type="capsule" fromto="-0.12257722187303174 0.12257722187303174 -0.0 0.12257722187303174 -0.12257722187303174 0.0" size="0.08" name="geom_9.10"/>
-                <site pos="0 0 0" quat="0.9238795325112867 0.0 0.0 -0.3826834323650898" name="site_9.10"/>
-                <joint type="hinge" pos="-0.12257722187303174 0.12257722187303174 -0.0" axis="0 0 1" range="-30 30" name="joint_Base=rod_9.10"/>
-                <body pos="-0.12257722187303174 0.12257722187303174 -0.0" name="p9">
-                    <site name="p9"/>
-                </body>
-                <body name="rod_10.11" pos="0.20863264263431233 -0.20863264263431233 0.0">
-                    <geom type="capsule" fromto="-0.08605542076128059 0.08605542076128059 -0.0 0.08605542076128059 -0.08605542076128059 0.0" size="0.08" name="geom_10.11"/>
-                    <site pos="0 0 0" quat="0.9238795325112867 0.0 0.0 -0.38268343236508984" name="site_10.11"/>
-                    <joint type="hinge" pos="-0.08605542076128059 0.08605542076128059 -0.0" axis="1 1 0" range="30 70" name="joint_rod_9.10=rod_10.11"/>
-                    <body pos="-0.08605542076128059 0.08605542076128059 -0.0" name="p10">
-                        <site name="p10"/>
-                    </body>
+            <body name="rod_1.2" pos="0.1461 0.1461 0">
+                <geom name="geom_1.2" type="capsule" fromto="-0.088 -0.088 0 0.088 0.088 0" size="0.08" density="5.0"/>
+                <inertial pos="0 0 0" mass="20.0" diaginertia="0.1 0.1 0.1"/>
+                <site name="site_1.2" pos="0 0 0" quat="0.9238795 0.0 0.0 0.3826834"/>
+                <joint name="joint_rod_0.1=rod_1.2" type="hinge" pos="-0.088 -0.088 0" axis="-1 1 0" range="30 70"/>
+                <body name="p1" pos="-0.088 -0.088 0">
+                    <site name="p1"/>
                 </body>
             </body>
         </body>
+
+        <!-- Limb 1 (135°) -->
+        <body name="rod_3.4" pos="-0.2581 0.2581 0.0">
+            <geom name="geom_3.4" type="capsule" fromto="0.0581 -0.0581 0 -0.0581 0.0581 0" size="0.08" density="5.0"/>
+            <site name="site_3.4" pos="0 0 0" quat="0.3826834 0.0 -0.0 0.9238795"/>
+            <joint name="joint_Base=rod_3.4" type="hinge" pos="0.0581 -0.0581 0" axis="0 0 1" range="-30 30"/>
+            <body name="p3" pos="0.0581 -0.0581 0">
+                <site name="p3"/>
+            </body>
+            <body name="rod_4.5" pos="-0.1461 0.1461 0">
+                <geom name="geom_4.5" type="capsule" fromto="0.088 -0.088 0 -0.088 0.088 0" size="0.08" density="5.0"/>
+                <inertial pos="0 0 0" mass="20.0" diaginertia="0.1 0.1 0.1"/>
+                <site name="site_4.5" pos="0 0 0" quat="0.3826834 0.0 -0.0 0.9238795"/>
+                <joint name="joint_rod_3.4=rod_4.5" type="hinge" pos="0.088 -0.088 0" axis="1 1 0" range="-70 -30"/>
+                <body name="p4" pos="0.088 -0.088 0">
+                    <site name="p4"/>
+                </body>
+            </body>
+        </body>
+
+        <!-- Limb 2 (225°) -->
+        <body name="rod_6.7" pos="-0.2581 -0.2581 0.0">
+            <geom name="geom_6.7" type="capsule" fromto="0.0581 0.0581 0 -0.0581 -0.0581 0" size="0.08" density="5.0"/>
+            <site name="site_6.7" pos="0 0 0" quat="0.3826834 0.0 -0.0 -0.9238795"/>
+            <joint name="joint_Base=rod_6.7" type="hinge" pos="0.0581 0.0581 0" axis="0 0 1" range="-30 30"/>
+            <body name="p6" pos="0.0581 0.0581 0">
+                <site name="p6"/>
+            </body>
+            <body name="rod_7.8" pos="-0.1461 -0.1461 0">
+                <geom name="geom_7.8" type="capsule" fromto="0.088 0.088 0 -0.088 -0.088 0" size="0.08" density="5.0"/>
+                <inertial pos="0 0 0" mass="20.0" diaginertia="0.1 0.1 0.1"/>
+                <site name="site_7.8" pos="0 0 0" quat="0.3826834 0.0 -0.0 -0.9238795"/>
+                <joint name="joint_rod_6.7=rod_7.8" type="hinge" pos="0.088 0.088 0" axis="-1 1 0" range="-70 -30"/>
+                <body name="p7" pos="0.088 0.088 0">
+                    <site name="p7"/>
+                </body>
+            </body>
+        </body>
+
+        <!-- Limb 3 (315°) -->
+        <body name="rod_9.10" pos="0.2581 -0.2581 0.0">
+            <geom name="geom_9.10" type="capsule" fromto="-0.0581 0.0581 0 0.0581 -0.0581 0" size="0.08" density="5.0"/>
+            <site name="site_9.10" pos="0 0 0" quat="0.9238795 0.0 0.0 -0.3826834"/>
+            <joint name="joint_Base=rod_9.10" type="hinge" pos="-0.0581 0.0581 0" axis="0 0 1" range="-30 30"/>
+            <body name="p9" pos="-0.0581 0.0581 0">
+                <site name="p9"/>
+            </body>
+            <body name="rod_10.11" pos="0.1461 -0.1461 0">
+                <geom name="geom_10.11" type="capsule" fromto="-0.088 0.088 0 0.088 -0.088 0" size="0.08" density="5.0"/>
+                <inertial pos="0 0 0" mass="20.0" diaginertia="0.1 0.1 0.1"/>
+                <site name="site_10.11" pos="0 0 0" quat="0.9238795 0.0 0.0 -0.3826834"/>
+                <joint name="joint_rod_9.10=rod_10.11" type="hinge" pos="-0.088 0.088 0" axis="1 1 0" range="30 70"/>
+                <body name="p10" pos="-0.088 0.088 0">
+                    <site name="p10"/>
+                </body>
+            </body>
+        </body>
+
+    </body>
     </worldbody>
+
     <actuator>
-        <motor gear="150" ctrlrange="-1.0 1.0" ctrllimited="true" joint="joint_Base=rod_0.1"/>
-        <motor gear="150" ctrlrange="-1.0 1.0" ctrllimited="true" joint="joint_rod_0.1=rod_1.2"/>
-        <motor gear="150" ctrlrange="-1.0 1.0" ctrllimited="true" joint="joint_Base=rod_3.4"/>
-        <motor gear="150" ctrlrange="-1.0 1.0" ctrllimited="true" joint="joint_rod_3.4=rod_4.5"/>
-        <motor gear="150" ctrlrange="-1.0 1.0" ctrllimited="true" joint="joint_Base=rod_6.7"/>
-        <motor gear="150" ctrlrange="-1.0 1.0" ctrllimited="true" joint="joint_rod_6.7=rod_7.8"/>
-        <motor gear="150" ctrlrange="-1.0 1.0" ctrllimited="true" joint="joint_Base=rod_9.10"/>
-        <motor gear="150" ctrlrange="-1.0 1.0" ctrllimited="true" joint="joint_rod_9.10=rod_10.11"/>
+        <motor gear="700" ctrlrange="-0.05 0.05" ctrllimited="true" joint="joint_Base=rod_0.1"/>
+        <motor gear="700" ctrlrange="-0.05 0.05" ctrllimited="true" joint="joint_rod_0.1=rod_1.2"/>
+        <motor gear="700" ctrlrange="-0.05 0.05" ctrllimited="true" joint="joint_Base=rod_3.4"/>
+        <motor gear="700" ctrlrange="-0.05 0.05" ctrllimited="true" joint="joint_rod_3.4=rod_4.5"/>
+        <motor gear="700" ctrlrange="-0.05 0.05" ctrllimited="true" joint="joint_Base=rod_6.7"/>
+        <motor gear="700" ctrlrange="-0.05 0.05" ctrllimited="true" joint="joint_rod_6.7=rod_7.8"/>
+        <motor gear="700" ctrlrange="-0.05 0.05" ctrllimited="true" joint="joint_Base=rod_9.10"/>
+        <motor gear="700" ctrlrange="-0.05 0.05" ctrllimited="true" joint="joint_rod_9.10=rod_10.11"/>
     </actuator>
+
     <sensor>
         <accelerometer site="site_0.1"/>
         <gyro site="site_0.1"/>
@@ -115,7 +128,9 @@
         <gyro site="site_10.11"/>
         <magnetometer site="site_10.11"/>
     </sensor>
+
     <contact>
+        <pair geom1="geom_0.0" geom2="floor"/>
         <pair geom1="geom_0.1" geom2="floor"/>
         <pair geom1="geom_1.2" geom2="floor"/>
         <pair geom1="geom_3.4" geom2="floor"/>
@@ -124,5 +139,16 @@
         <pair geom1="geom_7.8" geom2="floor"/>
         <pair geom1="geom_9.10" geom2="floor"/>
         <pair geom1="geom_10.11" geom2="floor"/>
+    </contact>
+    <contact>
+        <pair geom1="geom_0.0" geom2="outer_ring"/>
+        <pair geom1="geom_0.1" geom2="outer_ring"/>
+        <pair geom1="geom_1.2" geom2="outer_ring"/>
+        <pair geom1="geom_3.4" geom2="outer_ring"/>
+        <pair geom1="geom_4.5" geom2="outer_ring"/>
+        <pair geom1="geom_6.7" geom2="outer_ring"/>
+        <pair geom1="geom_7.8" geom2="outer_ring"/>
+        <pair geom1="geom_9.10" geom2="outer_ring"/>
+        <pair geom1="geom_10.11" geom2="outer_ring"/>
     </contact>
 </mujoco>
