@@ -28,7 +28,7 @@ if __name__ == "__main__":
     results_dir = os.path.join(ROOT_DIR, "results", ENV_NAME, "multi")
 
     for generation in range(0, 10):
-        generation = 39
+        generation = 4
         best_genotype = load_best_individual(results_dir, generation=generation)
 
         # Create the Ant world (fixed morphology)

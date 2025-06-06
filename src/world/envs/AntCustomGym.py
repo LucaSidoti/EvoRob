@@ -155,9 +155,11 @@ class AntCustomEnv(MujocoEnv, utils.EzPickle):
             DOF = np.argwhere((np.isnan(qacc)) + (np.isinf(qacc)) + (np.abs(qacc) > 1e6)).squeeze()[0]
             print(ValueError(f'MuJoCo Warning: Nan, Inf or huge value in QACC at DOF {DOF}'))
             terminated = True
-        if self.data.qpos[2] < 0.2 or self.data.qpos[2] > 1.0:
+        if self.data.qpos[2] < 0.2 or self.data.qpos[2] > 3.0:
             terminated = True
         if np.isinf(observation).any():
+            terminated = True
+        if info["distance_from_origin"] < 0.75:
             terminated = True
 
         self.previous_state = observation
@@ -174,9 +176,10 @@ class AntCustomEnv(MujocoEnv, utils.EzPickle):
         qw, qx, qy, qz = position[3], position[4], position[5], position[6]
         yaw = np.arctan2(2.0 * (qw * qz + qx * qy),
                         1.0 - 2.0 * (qy * qy + qz * qz))
-        pos_radius = np.linalg.norm(np.array([position[0], position[1]]))
-        in_dist = pos_radius - 0.5
-        ext_dist = 3 - pos_radius
+        # pos_radius = np.linalg.norm(np.array([position[0], position[1]]))
+        
+        in_dist = np.linalg.norm(self.data.qpos[0:2], ord=2) - 0.5
+        ext_dist = 3 - np.linalg.norm(self.data.qpos[0:2], ord=2)
     
 
         if self._exclude_current_positions_from_observation:

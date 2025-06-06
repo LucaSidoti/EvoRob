@@ -119,7 +119,7 @@ class AntWorld(World):
     
     def get_fixed_morphology(self):
         # Morphologie fixe "standard"
-        points = np.array([
+        points = np.array([ #0.2, 0.34, 0.50
             [0.2, 0.2, 0], [0.35, 0.35, 0], [0.45, 0.45, 0],
             [-0.2, 0.2, 0], [-0.35, 0.35, 0], [-0.45, 0.45, 0],
             [-0.2, -0.2, 0], [-0.35, -0.35, 0], [-0.45, -0.45, 0],
@@ -183,8 +183,6 @@ class AntWorld(World):
 
         # print("initial_positions:", initial_positions)
 
-        previous_angles = np.arctan2(initial_positions[:, 1], initial_positions[:, 0])
-
         for step in range(self.n_steps):
             actions = np.where(done_mask[:, None], 0, self.controller.get_action(observations.T).T)
             observations, _, dones, truncated, infos = envs.step(actions)
@@ -198,34 +196,15 @@ class AntWorld(World):
 
             # Angle wrt the center
             current_angles = np.arctan2(y_pos, x_pos)
-            delta_angles = current_angles - previous_angles
 
-            # Correction for -pi/+pi transition
-            delta_angles = (delta_angles + np.pi) % (2 * np.pi) - np.pi
-
-            # Indirect rotations
-            angular_reward = np.where(delta_angles > 0, delta_angles, 0)
-
-            # Tangential velocity
-            displacement = np.linalg.norm(current_positions - previous_positions, axis=1)
-            tangential_reward = displacement
-
-            # Penalization for frontier proximity (rayon max ~1.2 par exemple)
+            # Defining current position radius
             radius = np.linalg.norm(current_positions, axis=1)
-            upper_radius_too_far = 2
-            lower_radius_too_far = 1.0
-            penalty_too_far = np.where((radius > upper_radius_too_far), -(radius - upper_radius_too_far)**2, 0.0)
-            penalty_too_close = np.where((radius < lower_radius_too_far), -(radius - lower_radius_too_far)**2, 0.0)
-            combined_offtrack_penalty = penalty_too_far + penalty_too_close
 
             # Introduce cumulative sum of radius errors
             goal_radius = 1.5
             radius_cum_sum += (radius - goal_radius)**2
 
-            
-            # position_step = 0.25
             exp_traj_vec=np.array([-radius*np.cos(current_angles),radius*np.sin(current_angles)])
-            # goal_point = current_positions + exp_traj_vec.T*position_step
 
             current_spd_vec = np.stack([infos["x_velocity"], infos["y_velocity"]], axis=0)
             
@@ -243,18 +222,13 @@ class AntWorld(World):
 
             rewards_full[step, ~done_mask] = combined_reward[~done_mask]
 
-
-            circle_deviation = (radius - 1.0) ** 2  # Distance quadratique au rayon 1   ####### TODO
-
             # MULTI-OBJECTIFS POUR NSGA-II
             # For visualisation
             # multi_obj_reward = np.array([angular_reward, tangential_reward]).T        ####### INITAL 
-            multi_obj_reward = np.array([tangential_reward, -5.0 * circle_deviation]).T
+            multi_obj_reward = np.array([- 5e-8*(radius_cum_sum)**4, 20000*(np.sum(current_spd_vec * exp_traj_vec, axis=0))]).T
             multi_obj_rewards_full[step, ~done_mask] = multi_obj_reward[~done_mask]
 
             # Update
-            previous_positions = current_positions
-            previous_angles = current_angles
             done_mask = done_mask | dones | truncated
 
             # Optionally, break if all environments have terminated
@@ -380,10 +354,10 @@ def main():
         world = AntWorld()
         n_parameters = world.n_params
 
-        population_size = 250 #250
+        population_size = 70 #250
         NSGA_opts["min"] = -1
         NSGA_opts["max"] = 1
-        NSGA_opts["num_parents"] = 150
+        NSGA_opts["num_parents"] = 30
         NSGA_opts["num_generations"] = 100
         NSGA_opts["mutation_prob"] = 0.5
         NSGA_opts["crossover_prob"] = 0.65

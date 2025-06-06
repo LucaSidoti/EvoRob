@@ -14,7 +14,7 @@ options = {"timestep": "1e-2", "integration": "RK4"}
 radius = 0.08
 properties = {
 
-    "joint": {"armature": f"{1}", "damping": f"{1}", "ctrllimited": "true", "ctrlrange": "-1.0 1.0", "gear":f"{150}", "type": "hinge", "limited": "true"},
+    "joint": {"armature": f"{1}", "damping": f"{1}", "ctrllimited": "true", "ctrlrange": "-1 1", "gear":f"{150}", "type": "hinge", "limited": "true"},
     "rods": {"size": f"{radius}", "conaffinity":"0", "condim":"3", "density":"5.0", "friction":"1 0.5 0.5", "margin":"0.01", "rgba":"0.8 0.6 0.4 1"},
     "geom": {"margin": f"{0.01}", "conaffinity":"0", "condim":"3", "density":"5.0", "friction":"1 0.5 0.5", "margin":"0.01", "rgba":"0.8 0.6 0.4 1"},
 }
@@ -22,7 +22,7 @@ properties = {
 
 class AntRobot:
     def __init__(self, points=NDArray, connectivity_mat=NDArray, joint_limits=None, joint_axis=None, name: str = "AntRobot", props=None,
-                 fixed_base=False, verbose=True, z_offset=0.0,):
+                 fixed_base=False, verbose=True, z_offset=-0.15,):
         if props is None:
             props = properties
         self.properties = props
@@ -34,7 +34,7 @@ class AntRobot:
         self.fixed_base = fixed_base
         self.removed_nodes = []
         self.connectivity_mat = connectivity_mat
-        self.offset = np.array([0, 2, 0.75 + z_offset]) #TODO
+        self.offset = np.array([0, 1.5, 0.75 + z_offset]) #TODO
         self.points = points
         self.n_points = points.shape[0]
         self.point_names = [f"p{i}" for i in range(self.n_points)]
@@ -120,7 +120,8 @@ class AntRobot:
         worldbody_xml = xml.Element("worldbody")
         ant_xml = xml.SubElement(worldbody_xml, "body",
                                     attrib={"name": f"Base",
-                                            "pos": f"{self.offset[0]} {self.offset[1]} {self.offset[2]}"
+                                            "pos": f"{self.offset[0]} {self.offset[1]} {self.offset[2]}",
+                                            "quat": "0.7071 0 0 0.7071"  # Ajout de l'orientation initiale
                                             })
         if not (self.fixed_base):
             xml.SubElement(ant_xml, "joint", attrib={"type": "free",
@@ -132,8 +133,8 @@ class AntRobot:
 
         xml.SubElement(ant_xml, "geom", attrib={"type": "sphere",
                                                     "rgba": "0.8 0.6 0.4 1",
-                                                    "size": "0.25",
-                                                    # "mass": "0.02"
+                                                    "size": "0.22",
+                                                    # "mass": "1"
                                                 })
         xml.SubElement(ant_xml, "camera", attrib={"name": "track",
                                                       "mode": "trackcom",
