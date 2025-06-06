@@ -235,10 +235,10 @@ class AntWorld(World):
 
             # print("-20*(radius - goal_radius)**2:", -20*(radius - goal_radius)**2)
             # print("0*np.linalg.norm(current_spd_vec, axis=0):", 0*np.linalg.norm(current_spd_vec, axis=0))
-            # print("20*(np.sum(current_spd_vec * exp_traj_vec, axis=0)):", 20*(np.sum(current_spd_vec * exp_traj_vec, axis=0)))
-            # print("- 5e-7*(radius_cum_sum)**4:", - 5e-7*(radius_cum_sum)**4)
+            # print("20000*(np.sum(current_spd_vec * exp_traj_vec, axis=0)):", 20000*(np.sum(current_spd_vec * exp_traj_vec, axis=0)))
+            # print("- 5e-8*(radius_cum_sum)**4:", - 5e-8*(radius_cum_sum)**4)
             
-            combined_reward = - 5e-8*(radius_cum_sum)**4 #+ 0*np.linalg.norm(current_spd_vec, axis=0) + 200*(np.sum(current_spd_vec * exp_traj_vec, axis=0)) + combined_offtrack_penalty
+            combined_reward = - 5e-8*(radius_cum_sum)**4 + 20000*(np.sum(current_spd_vec * exp_traj_vec, axis=0)) #0*np.linalg.norm(current_spd_vec, axis=0) + combined_offtrack_penalty
             # print(combined_reward)
 
             rewards_full[step, ~done_mask] = combined_reward[~done_mask]
@@ -362,10 +362,10 @@ def main():
         world = AntWorld()
         n_parameters = world.n_params
 
-        population_size = 250
+        population_size = 70
         CMAES_opts["min"] = -1
         CMAES_opts["max"] = 1
-        CMAES_opts["num_parents"] = population_size
+        CMAES_opts["num_parents"] = 30
         CMAES_opts["num_generations"] = 100
         CMAES_opts["mutation_sigma"] = 0.33
 
@@ -380,12 +380,12 @@ def main():
         world = AntWorld()
         n_parameters = world.n_params
 
-        population_size = 150 #250
+        population_size = 250 #250
         NSGA_opts["min"] = -1
         NSGA_opts["max"] = 1
-        NSGA_opts["num_parents"] = population_size
+        NSGA_opts["num_parents"] = 150
         NSGA_opts["num_generations"] = 100
-        NSGA_opts["mutation_prob"] = 0.3
+        NSGA_opts["mutation_prob"] = 0.5
         NSGA_opts["crossover_prob"] = 0.65
 
         results_dir = os.path.join(ROOT_DIR, "results", "Ant_custom", "multi")
