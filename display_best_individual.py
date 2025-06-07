@@ -25,10 +25,10 @@ def visualise_individual(world, genotype):
 if __name__ == "__main__":
     ENV_NAME = "Ant_custom"
     ROOT_DIR = get_project_root()
-    results_dir = os.path.join(ROOT_DIR, "results", ENV_NAME, "multi")
+    results_dir = os.path.join(ROOT_DIR, "results", ENV_NAME, "multi_2025_06_07_1500_focus_bien_radius___to_finetune")
 
     for generation in range(0, 10):
-        generation = 4
+        generation = 53
         best_genotype = load_best_individual(results_dir, generation=generation)
 
         # Create the Ant world (fixed morphology)

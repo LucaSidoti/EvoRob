@@ -30,7 +30,7 @@ class AntWorld(World):
         state_space = 30  # https://gymnasium.farama.org/environments/mujoco/ant/#observation-space
 
         self.n_repeats = 3
-        self.n_steps = 1000
+        self.n_steps = 10000
         self.controller = MLP.NNController(state_space, action_space)
         self.n_weights = self.controller.n_params
 
@@ -49,69 +49,8 @@ class AntWorld(World):
 
     def geno2pheno(self, genotype):
         control_weights = genotype # [-self.n_weights:]
-        # body_params = (genotype[:-self.n_weights] + 1.5) / 5 * 0.5 + 0.1
-        # assert len(body_params) == 8
-        # assert len(control_weights) == self.n_weights
-        # assert not np.any(body_params <= 0)
 
         self.controller.geno2pheno(control_weights)
-
-        # front_left_leg, front_left_ankle, front_right_leg, front_right_ankle, back_left_leg, back_left_ankle, back_right_leg, back_right_ankle, = body_params
-
-        # # Define the 3D coordinates of the relative tree structure
-        # front_left_hip_xyz = np.array([0.2, 0.2, 0])
-        # front_left_knee_xyz = np.array(
-        #     [np.sqrt(0.5 * front_left_leg ** 2), np.sqrt(0.5 * front_left_leg ** 2), 0]) + front_left_hip_xyz
-        # front_left_toe_xyz = np.array(
-        #     [np.sqrt(0.5 * front_left_ankle ** 2), np.sqrt(0.5 * front_left_ankle ** 2), 0]) + front_left_knee_xyz
-
-        # front_right_hip_xyz = np.array([-0.2, 0.2, 0])
-        # front_right_knee_xyz = np.array(
-        #     [-np.sqrt(0.5 * front_right_leg ** 2), np.sqrt(0.5 * front_right_leg ** 2), 0]) + front_right_hip_xyz
-        # front_right_toe_xyz = np.array(
-        #     [-np.sqrt(0.5 * front_right_ankle ** 2), np.sqrt(0.5 * front_right_ankle ** 2), 0]) + front_right_knee_xyz
-
-        # back_left_hip_xyz = np.array([-0.2, -0.2, 0])
-        # back_left_knee_xyz = np.array(
-        #     [-np.sqrt(0.5 * back_left_leg ** 2), -np.sqrt(0.5 * back_left_leg ** 2), 0]) + back_left_hip_xyz
-        # back_left_toe_xyz = np.array(
-        #     [-np.sqrt(0.5 * back_left_ankle ** 2), -np.sqrt(0.5 * back_left_ankle ** 2), 0]) + back_left_knee_xyz
-
-        # back_right_hip_xyz = np.array([0.2, -0.2, 0])
-        # back_right_knee_xyz = np.array(
-        #     [np.sqrt(0.5 * back_right_leg ** 2), -np.sqrt(0.5 * back_right_leg ** 2), 0]) + back_right_hip_xyz
-        # back_right_toe_xyz = np.array(
-        #     [np.sqrt(0.5 * back_right_ankle ** 2), -np.sqrt(0.5 * back_right_ankle ** 2), 0]) + back_right_knee_xyz
-
-        # points = np.vstack([front_left_hip_xyz,
-        #                     front_left_knee_xyz,
-        #                     front_left_toe_xyz,
-        #                     front_right_hip_xyz,
-        #                     front_right_knee_xyz,
-        #                     front_right_toe_xyz,
-        #                     back_left_hip_xyz,
-        #                     back_left_knee_xyz,
-        #                     back_left_toe_xyz,
-        #                     back_right_hip_xyz,
-        #                     back_right_knee_xyz,
-        #                     back_right_toe_xyz,
-        #                     ])
-
-        # # define the type of connections [FIXED ARCHITECTURE]
-        # connectivity_mat = np.array(
-        #     [[150, np.inf, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        #      [0, 150, np.inf, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        #      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        #      [0, 0, 0, 150, np.inf, 0, 0, 0, 0, 0, 0, 0],
-        #      [0, 0, 0, 0, 150, np.inf, 0, 0, 0, 0, 0, 0],
-        #      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        #      [0, 0, 0, 0, 0, 0, 150, np.inf, 0, 0, 0, 0],
-        #      [0, 0, 0, 0, 0, 0, 0, 150, np.inf, 0, 0, 0],
-        #      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        #      [0, 0, 0, 0, 0, 0, 0, 0, 0, 150, np.inf, 0],
-        #      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 150, np.inf],
-        #      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], ]
-        # )
 
         points, connectivity_mat = self.get_fixed_morphology()
 
@@ -202,7 +141,7 @@ class AntWorld(World):
 
             # Introduce cumulative sum of radius errors
             goal_radius = 1.5
-            radius_cum_sum += (radius - goal_radius)**2
+            radius_cum_sum += ((radius - goal_radius)/goal_radius)**2
 
             exp_traj_vec=np.array([-radius*np.cos(current_angles),radius*np.sin(current_angles)])
 
@@ -214,18 +153,34 @@ class AntWorld(World):
 
             # print("-20*(radius - goal_radius)**2:", -20*(radius - goal_radius)**2)
             # print("0*np.linalg.norm(current_spd_vec, axis=0):", 0*np.linalg.norm(current_spd_vec, axis=0))
-            # print("20000*(np.sum(current_spd_vec * exp_traj_vec, axis=0)):", 20000*(np.sum(current_spd_vec * exp_traj_vec, axis=0)))
-            # print("- 5e-8*(radius_cum_sum)**4:", - 5e-8*(radius_cum_sum)**4)
-            
-            combined_reward = - 5e-8*(radius_cum_sum)**4 + 20000*(np.sum(current_spd_vec * exp_traj_vec, axis=0)) #0*np.linalg.norm(current_spd_vec, axis=0) + combined_offtrack_penalty
+
+            # if step == self.n_steps - 1:
+                # print("direction score:             ", 1000*(np.sum(current_spd_vec * exp_traj_vec, axis=0)))
+                # print("circular trajectory score:   ", - 5e-8*(radius_cum_sum)**4)
+                # print("ratio:                       mean :", np.mean(1000*(np.sum(current_spd_vec * exp_traj_vec, axis=0)) / (- 5e-8*(radius_cum_sum)**4), axis=0), ", std :", np.std(1000*(np.sum(current_spd_vec * exp_traj_vec, axis=0)) / (- 5e-8*(radius_cum_sum)**4), axis=0))
+                # print("radius_cum_sum:", 2*(((radius - goal_radius)/goal_radius)**2))
+                # print("scalar product ", (np.sum(current_spd_vec * exp_traj_vec, axis=0)) / (np.linalg.norm(current_spd_vec, axis=0) * np.linalg.norm(exp_traj_vec, axis=0)))
+
+            current_spd_vec = np.linalg.norm(current_spd_vec, axis=0)
+            if current_spd_vec[0] != 0 and current_spd_vec[1] != 0 and current_spd_vec[2] != 0:
+                direction_reward = (np.sum(current_spd_vec * exp_traj_vec, axis=0)) / (np.linalg.norm(current_spd_vec, axis=0) * np.linalg.norm(exp_traj_vec, axis=0))
+            else:
+                direction_reward = np.zeros_like(current_spd_vec)
+
+            combined_reward = -2*(((radius - goal_radius)/goal_radius)**2) + direction_reward
             # print(combined_reward)
+            # print("scalar product normalized:", (np.sum(current_spd_vec * exp_traj_vec, axis=0)) / (np.linalg.norm(current_spd_vec, axis=0) * np.linalg.norm(exp_traj_vec, axis=0)))
+            
 
             rewards_full[step, ~done_mask] = combined_reward[~done_mask]
 
             # MULTI-OBJECTIFS POUR NSGA-II
             # For visualisation
-            # multi_obj_reward = np.array([angular_reward, tangential_reward]).T        ####### INITAL 
-            multi_obj_reward = np.array([- 5e-8*(radius_cum_sum)**4, 20000*(np.sum(current_spd_vec * exp_traj_vec, axis=0))]).T
+            # multi_obj_reward = np.array([angular_reward, tangential_reward]).T        ####### INITAL
+
+
+
+            multi_obj_reward = np.array([- 2*(((radius - goal_radius)/goal_radius)**2), direction_reward]).T
             multi_obj_rewards_full[step, ~done_mask] = multi_obj_reward[~done_mask]
 
             # Update
@@ -357,7 +312,7 @@ def main():
         population_size = 70 #250
         NSGA_opts["min"] = -1
         NSGA_opts["max"] = 1
-        NSGA_opts["num_parents"] = 30
+        NSGA_opts["num_parents"] = 40
         NSGA_opts["num_generations"] = 100
         NSGA_opts["mutation_prob"] = 0.5
         NSGA_opts["crossover_prob"] = 0.65
